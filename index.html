@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expense Tracker</title>
+<style>
+:root{
+  --bg:#EEF2F5; --panel:#FFFFFF; --ink:#16232E; --muted:#5E6E7B; --line:#D5DDE3;
+  --accent:#0B6E6E; --accent-ink:#FFFFFF; --danger:#B3261E; --warn:#B26A00;
+  --c-food:#E07A1F; --c-transport:#2F6FDE; --c-bills:#6B4FBB; --c-shopping:#D6336C;
+  --c-health:#2E9E5B; --c-fun:#C9A100; --c-other:#7A8791;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0F1A22; --panel:#17252F; --ink:#E6EDF2; --muted:#93A3B0; --line:#2A3B47;
+    --accent:#3FB8B0; --accent-ink:#06201F; --danger:#F2867F; --warn:#E8B04A; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px 16px 48px}
+.wrap{max-width:920px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:1rem;margin:0 0 12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+label{display:grid;gap:4px;font-size:.85rem;color:var(--muted)}
+input,select,button{font:inherit;color:inherit}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{cursor:pointer;border-radius:6px;border:1px solid var(--line);background:transparent;padding:9px 14px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:hover{filter:brightness(.95)}
+.total{display:flex;flex-wrap:wrap;gap:24px;align-items:baseline;justify-content:space-between}
+.big{font-size:2.6rem;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.sub{color:var(--muted);font-size:.9rem}
+.budget{display:flex;gap:8px;align-items:end}
+.budget label{width:150px}
+.track{height:8px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:12px}
+.track>div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.split{display:flex;height:28px;border-radius:6px;overflow:hidden;background:var(--bg);border:1px solid var(--line)}
+.split>div{height:100%;min-width:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:.9rem}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.form{display:grid;gap:12px;grid-template-columns:1fr 1fr;align-items:end}
+.form .wide{grid-column:1/-1}
+@media (min-width:720px){.form{grid-template-columns:130px 1fr 160px 150px auto}.form .wide{grid-column:auto}}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.85rem;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.amt,th.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+td.del{width:1%;text-align:right}
+.del button{padding:4px 10px;color:var(--danger);border-color:transparent}
+.tag{display:inline-flex;gap:6px;align-items:center;font-size:.9rem}
+.empty{color:var(--muted);padding:18px 4px;text-align:center}
+.over{color:var(--danger)} .near{color:var(--warn)}
+.scroll{overflow-x:auto}
+.site{max-width:920px;margin:0 auto}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:4px 0 48px}
+.brand{font-weight:700;display:flex;gap:8px;align-items:center}
+a.btn{display:inline-block;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:9px 16px;color:var(--ink)}
+a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+a.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hero{display:grid;gap:32px;grid-template-columns:1fr;align-items:center}
+@media (min-width:820px){.hero{grid-template-columns:1.1fr .9fr}}
+h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:14px 0 16px;letter-spacing:-.025em}
+.lead{font-size:1.1rem;color:var(--muted);max-width:52ch;margin:0 0 24px}
+.pill{display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:99px;padding:3px 12px;font-size:.85rem;font-weight:600}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.sec{padding:64px 0 0}
+.sec h2.title{font-size:1.65rem;letter-spacing:-.015em;margin:0 0 8px}
+.sec p.intro{color:var(--muted);margin:0 0 28px;max-width:60ch}
+.feats{display:grid;gap:28px 32px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.feat{border-top:3px solid var(--c);padding-top:12px}
+.feat h3{margin:0 0 6px;font-size:1.05rem}
+.feat p{margin:0;color:var(--muted);font-size:.95rem}
+.steps{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));counter-reset:s}
+.step{counter-increment:s}
+.step h3{margin:0 0 6px;font-size:1.05rem}
+.step h3::before{content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.85rem;margin-right:10px}
+.step p{margin:0;color:var(--muted);font-size:.95rem}
+.insights{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.insights li{padding-left:14px;border-left:3px solid var(--accent)}
+details{border-bottom:1px solid var(--line);padding:14px 0}
+summary{cursor:pointer;font-weight:600}
+details p{margin:8px 0 0;color:var(--muted);max-width:64ch}
+.final{text-align:center;padding:72px 0 8px}
+.final h2{font-size:1.65rem;margin:0 0 16px}
+footer{color:var(--muted);font-size:.85rem;text-align:center;padding:40px 0 0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){.track>div{transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="site">
+  <nav class="nav">
+    <span class="brand"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="5" height="18" rx="1.5" fill="#E07A1F"/><rect x="9.5" y="8" width="5" height="13" rx="1.5" fill="#2F6FDE"/><rect x="17" y="13" width="5" height="8" rx="1.5" fill="#2E9E5B"/></svg>Spendwise</span>
+    <a class="btn" href="#app">Open tracker</a>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <span class="pill">AI-powered, runs on your device</span>
+      <h1>Know where your money went, before the month is over.</h1>
+      <p class="lead">Spendwise is an AI-powered expense tracker that sorts your spending for you, spots patterns in plain language, and warns you when your budget is in danger. No sign-up, no server, no bank login.</p>
+      <div class="cta"><a class="btn primary" href="#app">Start tracking</a><a class="btn" href="#features">See what it does</a></div>
+    </div>
+    <div class="panel" aria-label="Sample insights">
+      <div class="sub" style="margin-bottom:8px">A sample month</div>
+      <div class="split"><div style="width:41%;background:var(--c-food)"></div><div style="width:22%;background:var(--c-transport)"></div><div style="width:19%;background:var(--c-bills)"></div><div style="width:12%;background:var(--c-shopping)"></div><div style="width:6%;background:var(--c-fun)"></div></div>
+      <ul class="insights" style="margin-top:16px">
+        <li>Food is your biggest category at 41%.</li>
+        <li>You spend about ₹842 a day. At this pace you’ll finish the month at ₹26,100.</li>
+        <li>Transport is up 18% compared with last month.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" id="features">
+    <h2 class="title">Less typing, more clarity</h2>
+    <p class="intro">Spendwise does the sorting and the maths so you only enter what you spent.</p>
+    <div class="feats">
+      <div class="feat" style="--c:var(--c-food)"><h3>AI category suggestions</h3><p>Type “Swiggy dinner” and the category fills itself in. It starts with common Indian merchants and words, then learns from the expenses you have already sorted.</p></div>
+      <div class="feat" style="--c:var(--c-transport)"><h3>Insights in plain language</h3><p>Each month you get your biggest category, largest expense, daily average, projected month-end total, and how you compare with last month.</p></div>
+      <div class="feat" style="--c:var(--c-bills)"><h3>Budget guard</h3><p>Set a monthly budget. The bar turns amber at 80% and red when you go over, and the page tells you exactly how much is left.</p></div>
+      <div class="feat" style="--c:var(--c-shopping)"><h3>Category breakdown</h3><p>One colour bar shows how your month splits across food, transport, bills, shopping, health, fun, and other.</p></div>
+      <div class="feat" style="--c:var(--c-health)"><h3>Month by month</h3><p>Switch the month to review any period. Totals, insights, and the expense list all update together.</p></div>
+      <div class="feat" style="--c:var(--c-fun)"><h3>Private by design</h3><p>Your data stays in your browser. Nothing is uploaded, and you can export everything to CSV for Excel or Google Sheets any time.</p></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2 class="title">How it works</h2>
+    <p class="intro">Under a minute to set up, a few seconds per expense.</p>
+    <div class="steps">
+      <div class="step"><h3>Add an expense</h3><p>Enter the date, what it was, and the amount.</p></div>
+      <div class="step"><h3>Check the suggested category</h3><p>The AI suggests one as you type. Change it if it’s wrong and it learns from your choice.</p></div>
+      <div class="step"><h3>Read your insights</h3><p>See your totals, split, and where you’re heading by month-end.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-bottom:28px">
+    <h2 class="title" id="try">Try it now</h2>
+  </section>
+</div>
+
+<div class="wrap" id="app">
+  <header>
+    <div style="display:flex;gap:8px;align-items:end">
+      <label>Month <input type="month" id="month"></label>
+      <button id="export" type="button">Export CSV</button>
+    </div>
+  </header>
+
+  <section class="panel">
+    <div class="total">
+      <div>
+        <div class="sub">Spent this month</div>
+        <div class="big" id="total">₹0</div>
+        <div class="sub" id="count"></div>
+      </div>
+      <div class="budget">
+        <label>Monthly budget (₹) <input type="number" id="budget" min="0" step="100" placeholder="Optional"></label>
+      </div>
+    </div>
+    <div class="track" id="track" hidden><div id="bar"></div></div>
+    <div class="sub" id="budgetNote" style="margin-top:6px"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Add an expense</h2>
+    <div class="form">
+      <label>Date <input type="date" id="date"></label>
+      <label class="wide">Description <input type="text" id="desc" placeholder="e.g. Lunch at campus canteen" maxlength="80"></label>
+      <label>Category <select id="cat"></select></label>
+      <label>Amount (₹) <input type="number" id="amt" min="0" step="0.01" placeholder="0.00"></label>
+      <button class="primary wide" id="add" type="button">Add expense</button>
+    </div>
+    <div class="sub" id="hint" style="margin-top:8px"></div>
+    <div class="sub over" id="err" role="alert" style="margin-top:4px"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Insights</h2>
+    <ul class="insights" id="insights"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>Where it went</h2>
+    <div class="split" id="split" role="img" aria-label="Spending split by category"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Expenses</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="amt">Amount</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="empty" hidden>No expenses this month. Add your first one above.</div>
+  </section>
+</div>
+
+<div class="site">
+  <section class="sec">
+    <h2 class="title">Questions</h2>
+    <details><summary>Does my data leave my device?</summary><p>No. Categorization and insights run in your browser. There is no account and no server, so nothing is uploaded.</p></details>
+    <details><summary>How does the AI learn my categories?</summary><p>Each time you add an expense, it remembers which words went with which category and uses them to weigh future suggestions. Pick a different category and the next suggestion reflects that.</p></details>
+    <details><summary>Where is my data saved?</summary><p>In your browser’s local storage. It stays when you reopen the file in the same browser, but it doesn’t sync between devices. Use Export CSV to back it up.</p></details>
+    <details><summary>Does it work offline?</summary><p>Yes. It’s a single file with no external dependencies.</p></details>
+  </section>
+  <section class="final">
+    <h2>Start with this month.</h2>
+    <a class="btn primary" href="#app">Add your first expense</a>
+  </section>
+  <footer>Spendwise keeps everything on your device.</footer>
+</div>
+
+<script>
+const CATS = [
+  ["Food","--c-food"],["Transport","--c-transport"],["Bills & rent","--c-bills"],
+  ["Shopping","--c-shopping"],["Health","--c-health"],["Fun","--c-fun"],["Other","--c-other"]
+];
+const KEY = "expense-tracker-v1";
+const $ = id => document.getElementById(id);
+let store = { expenses: [], budget: 0 };
+
+// Storage: uses localStorage when available, otherwise keeps data in memory only.
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw) store = JSON.parse(raw); }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
+}
+
+const fmt = n => "₹" + Number(n).toLocaleString("en-IN",{minimumFractionDigits:0,maximumFractionDigits:2});
+const todayStr = () => { const d=new Date(); return d.toISOString().slice(0,10); };
+const colorOf = name => { const c = CATS.find(c=>c[0]===name) || CATS[CATS.length-1]; return `var(${c[1]})`; };
+
+function render(){
+  const month = $("month").value;
+  const list = store.expenses.filter(e => e.date.startsWith(month))
+                             .sort((a,b)=> b.date.localeCompare(a.date) || b.id - a.id);
+  const total = list.reduce((s,e)=>s+e.amt,0);
+  $("total").textContent = fmt(total);
+  $("count").textContent = list.length ? `${list.length} expense${list.length>1?"s":""}` : "";
+
+  // Budget
+  const b = Number(store.budget)||0;
+  $("track").hidden = !b;
+  if(b){
+    const pct = Math.min(100, total/b*100);
+    $("bar").style.width = pct + "%";
+    $("bar").style.background = total>b ? "var(--danger)" : pct>=80 ? "var(--warn)" : "var(--accent)";
+    const left = b-total;
+    $("budgetNote").className = "sub " + (total>b ? "over" : pct>=80 ? "near" : "");
+    $("budgetNote").textContent = left>=0 ? `${fmt(left)} left of ${fmt(b)}` : `${fmt(-left)} over your ${fmt(b)} budget`;
+  } else $("budgetNote").textContent = "";
+
+  // Category split
+  const by = {};
+  list.forEach(e => by[e.cat] = (by[e.cat]||0) + e.amt);
+  const split = $("split"), legend = $("legend");
+  split.innerHTML = ""; legend.innerHTML = "";
+  CATS.forEach(([name]) => {
+    if(!by[name]) return;
+    const seg = document.createElement("div");
+    seg.style.width = (by[name]/total*100) + "%";
+    seg.style.background = colorOf(name);
+    seg.title = `${name}: ${fmt(by[name])}`;
+    split.appendChild(seg);
+    const li = document.createElement("span");
+    const dot = document.createElement("i"); dot.className="dot"; dot.style.background = colorOf(name);
+    li.append(dot, `${name} ${fmt(by[name])} (${Math.round(by[name]/total*100)}%)`);
+    legend.appendChild(li);
+  });
+  if(!total){ legend.textContent = "Nothing to show yet."; legend.className="legend sub"; } else legend.className="legend";
+
+  // Rows
+  const tbody = $("rows"); tbody.innerHTML = "";
+  list.forEach(e => {
+    const tr = document.createElement("tr");
+    const cells = [];
+    const d = document.createElement("td"); d.textContent = new Date(e.date+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+    const ds = document.createElement("td"); ds.textContent = e.desc;
+    const ct = document.createElement("td");
+    const tag = document.createElement("span"); tag.className="tag";
+    const dot = document.createElement("i"); dot.className="dot"; dot.style.background = colorOf(e.cat);
+    tag.append(dot, e.cat); ct.appendChild(tag);
+    const am = document.createElement("td"); am.className="amt"; am.textContent = fmt(e.amt);
+    const dl = document.createElement("td"); dl.className="del";
+    const btn = document.createElement("button"); btn.type="button"; btn.textContent="Delete";
+    btn.setAttribute("aria-label", `Delete ${e.desc}`);
+    btn.onclick = () => { store.expenses = store.expenses.filter(x=>x.id!==e.id); save(); render(); };
+    dl.appendChild(btn);
+    tr.append(d, ds, ct, am, dl); tbody.appendChild(tr);
+  });
+  $("empty").hidden = list.length > 0;
+  renderInsights(list, total, month, by);
+}
+
+function addExpense(){
+  const amt = parseFloat($("amt").value), desc = $("desc").value.trim(), date = $("date").value;
+  if(!date || !desc || !(amt>0)){
+    $("err").textContent = "Enter a date, a description, and an amount greater than 0.";
+    return;
+  }
+  $("err").textContent = "";
+  store.expenses.push({ id: Date.now(), amt, desc, cat: $("cat").value, date });
+  save();
+  $("desc").value = ""; $("amt").value = ""; $("desc").focus();
+  catTouched = false; $("hint").textContent = "";
+  $("month").value = date.slice(0,7);
+  render();
+}
+
+function exportCsv(){
+  const q = s => `"${String(s).replace(/"/g,'""')}"`;
+  const rows = [["Date","Description","Category","Amount"].join(",")]
+    .concat(store.expenses.slice().sort((a,b)=>a.date.localeCompare(b.date))
+    .map(e => [e.date, q(e.desc), q(e.cat), e.amt].join(",")));
+  const blob = new Blob([rows.join("\n")], {type:"text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "expenses.csv"; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Smart category suggestions: seed keywords plus words learned from your own past expenses.
+const SEED = {
+  "Food":["lunch","dinner","breakfast","snack","coffee","tea","zomato","swiggy","restaurant","cafe","canteen","biryani","pizza","groceries","grocery","milk","vegetables","fruits"],
+  "Transport":["uber","ola","rapido","auto","bus","metro","train","fuel","petrol","diesel","cab","taxi","flight","parking","toll"],
+  "Bills & rent":["rent","electricity","wifi","internet","recharge","bill","water","gas","insurance","emi","subscription","hostel","fees"],
+  "Shopping":["amazon","flipkart","myntra","shirt","shoes","clothes","jeans","gadget","headphones","book","books","mall"],
+  "Health":["doctor","medicine","pharmacy","hospital","gym","clinic","tablet","dentist","lab","checkup"],
+  "Fun":["movie","netflix","spotify","game","concert","trip","party","outing","bookmyshow","cricket"]
+};
+const words = s => s.toLowerCase().match(/[a-z]+/g) || [];
+let catTouched = false;
+function predict(text){
+  const sc = {}, ws = words(text);
+  const add = (c,w) => sc[c] = (sc[c]||0) + w;
+  ws.forEach(w => { for (const c in SEED) if (SEED[c].includes(w)) add(c,2); });
+  store.expenses.forEach(e => { const ew = words(e.desc); ws.forEach(w => { if (ew.includes(w)) add(e.cat,1); }); });
+  let best = null, top = 0;
+  for (const c in sc) if (sc[c] > top){ top = sc[c]; best = c; }
+  return best;
+}
+
+function renderInsights(list, total, month, by){
+  const ul = $("insights"); ul.innerHTML = "";
+  const out = [];
+  if(!list.length) out.push("Add a few expenses to see insights for this month.");
+  else {
+    const [topCat, topAmt] = Object.entries(by).sort((a,b)=>b[1]-a[1])[0];
+    out.push(`${topCat} is your biggest category at ${Math.round(topAmt/total*100)}% (${fmt(topAmt)}).`);
+    const big = list.reduce((m,e)=> e.amt>m.amt ? e : m, list[0]);
+    out.push(`Largest expense: ${big.desc} at ${fmt(big.amt)}.`);
+    const [y,m] = month.split("-").map(Number), dim = new Date(y,m,0).getDate();
+    const now = new Date(), isCurrent = now.getFullYear()===y && now.getMonth()+1===m;
+    const days = isCurrent ? now.getDate() : dim;
+    const perDay = total/days, projected = perDay*dim;
+    out.push(isCurrent
+      ? `You spend about ${fmt(Math.round(perDay))} a day. At this pace you’ll finish the month at ${fmt(Math.round(projected))}.`
+      : `You spent about ${fmt(Math.round(perDay))} a day this month.`);
+    const pd = new Date(y, m-2, 1), pk = pd.getFullYear()+"-"+String(pd.getMonth()+1).padStart(2,"0");
+    const prev = store.expenses.filter(e=>e.date.startsWith(pk)).reduce((s,e)=>s+e.amt,0);
+    if(prev>0){
+      const ch = Math.round((total-prev)/prev*100);
+      out.push(ch===0 ? "Spending is the same as last month."
+        : `Spending is ${Math.abs(ch)}% ${ch>0?"higher":"lower"} than last month (${fmt(prev)}).`);
+    }
+    const b = Number(store.budget)||0;
+    if(b && isCurrent) out.push(projected>b
+      ? `At this pace you’ll pass your budget by ${fmt(Math.round(projected-b))}.`
+      : "You’re on track to stay within your budget.");
+  }
+  out.forEach(t => { const li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+}
+
+$("cat").addEventListener("change", () => { catTouched = true; $("hint").textContent = ""; });
+$("desc").addEventListener("input", () => {
+  if(catTouched) return;
+  const p = predict($("desc").value);
+  if(p){ $("cat").value = p; $("hint").textContent = "Suggested category: " + p; }
+  else $("hint").textContent = "";
+});
+
+// Init
+load();
+CATS.forEach(([n]) => { const o=document.createElement("option"); o.textContent=n; $("cat").appendChild(o); });
+$("date").value = todayStr();
+$("month").value = todayStr().slice(0,7);
+$("budget").value = store.budget || "";
+$("month").addEventListener("change", render);
+$("budget").addEventListener("input", e => { store.budget = Number(e.target.value)||0; save(); render(); });
+$("add").addEventListener("click", addExpense);
+$("amt").addEventListener("keydown", e => { if(e.key==="Enter") addExpense(); });
+$("desc").addEventListener("keydown", e => { if(e.key==="Enter") addExpense(); });
+$("export").addEventListener("click", exportCsv);
+render();
+</script>
+</body>
+</html>
